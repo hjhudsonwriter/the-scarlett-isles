@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Heartwood VTT</title>
+  <meta name="theme-color" content="#111827" />
+  <link rel="manifest" href="./manifest.json" />
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f172a;
+      --panel2:#111c36;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --accent:#22c55e;
+      --danger:#ef4444;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --r:16px;
+      --tap:44px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 30% 0%, rgba(34,197,94,.10), transparent 55%),
+                  radial-gradient(900px 500px at 80% 30%, rgba(59,130,246,.10), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      overflow:hidden;
+    }
+    header{
+      height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,24,39,.85), rgba(17,24,39,.55));
+      backdrop-filter: blur(10px);
+      position:relative;
+      z-index:10;
+    }
+    header .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:700; letter-spacing:.2px;
+      user-select:none;
+    }
+    header .pill{
+      font-size:12px;
+      padding:4px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      background:rgba(255,255,255,.04);
+    }
+    header .actions{display:flex; gap:8px; align-items:center;}
+    button, input, select{
+      font:inherit;
+      color:inherit;
+      background: rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-height: var(--tap);
+      outline:none;
+    }
+    button{
+      cursor:pointer;
+      user-select:none;
+      transition: transform .04s ease, background .15s ease, border-color .15s ease;
+    }
+    button:active{transform: translateY(1px)}
+    button.primary{
+      background: rgba(34,197,94,.18);
+      border-color: rgba(34,197,94,.35);
+    }
+    button.danger{
+      background: rgba(239,68,68,.14);
+      border-color: rgba(239,68,68,.35);
+    }
+    button.icon{
+      width: var(--tap);
+      padding:0;
+      display:grid;
+      place-items:center;
+    }
+
+    .app{
+      height: calc(100% - 56px);
+      display:grid;
+      grid-template-columns: 1fr 340px;
+    }
+    @media (max-width: 980px){
+      .app{grid-template-columns:1fr}
+      .sidebar{position:absolute; top:56px; right:0; bottom:0; width:min(92vw, 380px); transform: translateX(105%); transition: transform .2s ease; z-index:20;}
+      body.sidebar-open .sidebar{transform: translateX(0)}
+      .sidebar-backdrop{
+        display:none;
+        position:absolute; inset:56px 0 0 0;
+        background: rgba(0,0,0,.45);
+        z-index:19;
+      }
+      body.sidebar-open .sidebar-backdrop{display:block}
+    }
+
+    .stage{
+      position:relative;
+      overflow:hidden;
+      touch-action:none; /* we manage pan/zoom */
+      background: rgba(255,255,255,.02);
+    }
+
+    .hud{
+      position:absolute; left:12px; top:12px;
+      display:flex; gap:8px; z-index:5;
+    }
+    .hud .chip{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      box-shadow: var(--shadow);
+      user-select:none;
+    }
+    .hud .chip b{font-variant-numeric: tabular-nums}
+    .hud small{color:var(--muted)}
+
+    canvas{display:block; width:100%; height:100%}
+
+    .sidebar{
+      border-left:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,42,.92), rgba(15,23,42,.78));
+      backdrop-filter: blur(10px);
+      padding:12px;
+      overflow:auto;
+    }
+    .card{
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+    .card h3{
+      margin:0 0 10px 0;
+      font-size: 13px;
+      letter-spacing:.2px;
+      color: #f3f4f6;
+    }
+    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .row > *{flex:1}
+    .row .shrink{flex:0 0 auto}
+    .muted{color:var(--muted)}
+    .sep{height:1px; background:var(--line); margin:10px 0}
+
+    .list{display:flex; flex-direction:column; gap:8px}
+    .list .item{
+      padding:10px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:8px;
+      align-items:center;
+    }
+    .item .meta{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .badge{
+      font-size:12px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background: rgba(0,0,0,.18);
+    }
+    .badge.good{border-color: rgba(34,197,94,.35); color:#bbf7d0; background: rgba(34,197,94,.10)}
+    .badge.bad{border-color: rgba(239,68,68,.35); color:#fecaca; background: rgba(239,68,68,.10)}
+
+    .tiny{font-size:12px}
+    .mono{font-variant-numeric: tabular-nums}
+    .token-edit{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+    }
+    .token-edit input{width:100%}
+    .hint{font-size:12px; color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span style="width:28px;height:28px;border-radius:10px;background:rgba(34,197,94,.20);border:1px solid rgba(34,197,94,.35);display:grid;place-items:center;">🌿</span>
+      <span>Heartwood VTT</span>
+      <span class="pill">MVP</span>
+    </div>
+    <div class="actions">
+      <button class="icon" id="btnSidebar" title="Open tools">☰</button>
+      <button class="primary" id="btnAddToken" title="Add token">＋ Token</button>
+      <button id="btnCenter" title="Center view">⤢</button>
+    </div>
+  </header>
+
+  <div class="app">
+    <div class="stage" id="stage">
+      <canvas id="c"></canvas>
+
+      <div class="hud">
+        <div class="chip">
+          <div>
+            <div class="tiny muted">Zoom</div>
+            <b class="mono" id="hudZoom">100%</b>
+          </div>
+        </div>
+        <div class="chip">
+          <div>
+            <div class="tiny muted">Round</div>
+            <b class="mono" id="hudRound">1</b>
+          </div>
+          <small class="muted">Turn: <span class="mono" id="hudTurn">—</span></small>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-backdrop" id="backdrop"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="card">
+        <h3>Map</h3>
+        <div class="row">
+          <input type="file" id="mapFile" accept="image/*" />
+        </div>
+        <div class="sep"></div>
+        <div class="row">
+          <label class="tiny muted" style="flex:0 0 auto;">Grid (px)</label>
+          <input id="gridSize" type="number" min="16" max="256" value="64" />
+          <button id="btnToggleGrid" class="shrink">Grid</button>
+        </div>
+        <div class="hint" style="margin-top:8px;">Tip: set Grid to match your image squares (often 50–100px).</div>
+      </div>
+
+      <div class="card">
+        <h3>Tokens</h3>
+        <div class="list" id="tokenList"></div>
+        <div class="sep"></div>
+        <div class="hint">Tap a token on the map to select it. Drag to move. Double-tap to snap to grid.</div>
+      </div>
+
+      <div class="card">
+        <h3>Initiative</h3>
+        <div class="row">
+          <button id="btnStartInit" class="primary">Start</button>
+          <button id="btnPrev" class="shrink">◀</button>
+          <button id="btnNext" class="shrink">▶</button>
+          <button id="btnResetRound" class="shrink">Reset</button>
+        </div>
+        <div class="sep"></div>
+        <div class="list" id="initList"></div>
+        <div class="sep"></div>
+        <div class="row">
+          <button class="danger" id="btnClearAll">Clear Scene</button>
+          <button id="btnExport">Export JSON</button>
+        </div>
+        <div class="hint" style="margin-top:8px;">Export gives you a portable “campaign scene” file you can re-import later (next step).</div>
+      </div>
+
+      <div class="card">
+        <h3>D&D Beyond sync (reality check)</h3>
+        <div class="hint">
+          Direct syncing requires an official API/auth flow. Wizards’ terms currently restrict unauthorized data scraping. :contentReference[oaicite:1]{index=1}
+          <div style="margin-top:8px;">
+            This app is built with an adapter layer so you can later add an official integration if one becomes available.
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+<script>
+(() => {
+  // ---------------------------
+  // State + persistence
+  // ---------------------------
+  const STORAGE_KEY = "heartwood_vtt_scene_v1";
+
+  const state = {
+    map: { src: null, w: 2000, h: 1200 },
+    view: { x: 0, y: 0, scale: 1 },
+    grid: { size: 64, show: true },
+    tokens: [],
+    selectedTokenId: null,
+    initiative: { order: [], idx: -1, round: 1 },
+  };
+
+  const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      const s = JSON.parse(raw);
+      Object.assign(state, s);
+    }catch(e){}
+  }
+
+  load();
+
+  // ---------------------------
+  // Canvas rendering
+  // ---------------------------
+  const stage = document.getElementById("stage");
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+
+  const hudZoom = document.getElementById("hudZoom");
+  const hudRound = document.getElementById("hudRound");
+  const hudTurn = document.getElementById("hudTurn");
+
+  const img = new Image();
+  img.onload = () => {
+    state.map.w = img.naturalWidth || state.map.w;
+    state.map.h = img.naturalHeight || state.map.h;
+    centerView();
+    draw();
+    save();
+  };
+  if(state.map.src) img.src = state.map.src;
+
+  function resize(){
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(stage.clientWidth * dpr);
+    canvas.height = Math.floor(stage.clientHeight * dpr);
+    canvas.style.width = stage.clientWidth + "px";
+    canvas.style.height = stage.clientHeight + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  function worldToScreen(wx, wy){
+    return {
+      x: (wx - state.view.x) * state.view.scale,
+      y: (wy - state.view.y) * state.view.scale,
+    };
+  }
+  function screenToWorld(sx, sy){
+    return {
+      x: sx / state.view.scale + state.view.x,
+      y: sy / state.view.scale + state.view.y,
+    };
+  }
+
+  function draw(){
+    const w = stage.clientWidth;
+    const h = stage.clientHeight;
+    ctx.clearRect(0,0,w,h);
+
+    // Background
+    ctx.fillStyle = "rgba(0,0,0,.15)";
+    ctx.fillRect(0,0,w,h);
+
+    // Map image
+    if(state.map.src && img.complete){
+      const p = worldToScreen(0,0);
+      ctx.drawImage(img, p.x, p.y, state.map.w * state.view.scale, state.map.h * state.view.scale);
+    } else {
+      ctx.fillStyle = "rgba(255,255,255,.06)";
+      ctx.fillRect(12,12,w-24,h-24);
+      ctx.fillStyle = "rgba(255,255,255,.65)";
+      ctx.font = "16px system-ui";
+      ctx.fillText("Load a map image to begin.", 28, 44);
+      ctx.fillStyle = "rgba(255,255,255,.45)";
+      ctx.font = "13px system-ui";
+      ctx.fillText("Map panel → choose a PNG/JPG (e.g., your Underroot).", 28, 66);
+    }
+
+    // Grid
+    if(state.grid.show){
+      const gs = state.grid.size;
+      ctx.strokeStyle = "rgba(255,255,255,.08)";
+      ctx.lineWidth = 1;
+
+      // visible bounds in world coords
+      const tl = screenToWorld(0,0);
+      const br = screenToWorld(w,h);
+
+      const startX = Math.floor(tl.x / gs) * gs;
+      const startY = Math.floor(tl.y / gs) * gs;
+
+      for(let x = startX; x < br.x; x += gs){
+        const sx = worldToScreen(x,0).x;
+        ctx.beginPath();
+        ctx.moveTo(sx, 0);
+        ctx.lineTo(sx, h);
+        ctx.stroke();
+      }
+      for(let y = startY; y < br.y; y += gs){
+        const sy = worldToScreen(0,y).y;
+        ctx.beginPath();
+        ctx.moveTo(0, sy);
+        ctx.lineTo(w, sy);
+        ctx.stroke();
+      }
+    }
+
+    // Tokens
+    for(const t of state.tokens){
+      const p = worldToScreen(t.x, t.y);
+      const r = (t.r || 22) * state.view.scale;
+
+      // token circle
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+      ctx.fillStyle = t.f || "rgba(34,197,94,.25)";
+      ctx.fill();
+
+      const selected = t.id === state.selectedTokenId;
+      ctx.lineWidth = selected ? 3 : 2;
+      ctx.strokeStyle = selected ? "rgba(34,197,94,.85)" : "rgba(255,255,255,.28)";
+      ctx.stroke();
+
+      // nameplate
+      ctx.font = `${Math.max(12, 12*state.view.scale)}px system-ui`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      const label = t.name || "Token";
+      const tw = ctx.measureText(label).width + 10;
+      const lx = p.x - tw/2;
+      const ly = p.y - r - 8;
+      ctx.fillRect(lx, ly-16, tw, 18);
+      ctx.fillStyle = "rgba(255,255,255,.9)";
+      ctx.fillText(label, p.x, ly);
+
+      // hp badge
+      ctx.font = `${Math.max(11, 11*state.view.scale)}px system-ui`;
+      ctx.textBaseline = "top";
+      const hp = (t.hp ?? "—");
+      const ac = (t.ac ?? "—");
+      const badge = `HP ${hp}  AC ${ac}`;
+      const bw = ctx.measureText(badge).width + 10;
+      const bx = p.x - bw/2;
+      const by = p.y + r + 6;
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      ctx.fillRect(bx, by, bw, 18);
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.fillText(badge, p.x, by+3);
+    }
+
+    // HUD
+    hudZoom.textContent = Math.round(state.view.scale*100) + "%";
+    hudRound.textContent = String(state.initiative.round);
+    const turnId = state.initiative.order[state.initiative.idx];
+    const turnToken = state.tokens.find(t => t.id === turnId);
+    hudTurn.textContent = turnToken ? turnToken.name : "—";
+  }
+
+  function centerView(){
+    // center map in viewport
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const scale = Math.min(w / (state.map.w||2000), h / (state.map.h||1200));
+    state.view.scale = Math.max(0.25, Math.min(2.5, scale));
+    state.view.x = (state.map.w/2) - (w/(2*state.view.scale));
+    state.view.y = (state.map.h/2) - (h/(2*state.view.scale));
+    save();
+    draw();
+  }
+
+  // ---------------------------
+  // Input: pan/zoom + token drag
+  // ---------------------------
+  let pointers = new Map();
+  let draggingTokenId = null;
+  let lastTap = { t:0, id:null };
+
+  function hitToken(sx, sy){
+    const wpos = screenToWorld(sx, sy);
+    for(let i = state.tokens.length-1; i>=0; i--){
+      const t = state.tokens[i];
+      const dx = wpos.x - t.x, dy = wpos.y - t.y;
+      const r = (t.r || 22);
+      if(dx*dx + dy*dy <= r*r) return t;
+    }
+    return null;
+  }
+
+  stage.addEventListener("pointerdown", (e) => {
+    stage.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    const rect = stage.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+
+    const t = hitToken(sx, sy);
+    if(t){
+      state.selectedTokenId = t.id;
+      draggingTokenId = t.id;
+      renderTokenPanels();
+      save();
+      draw();
+
+      // double-tap to snap
+      const now = performance.now();
+      if(lastTap.id === t.id && (now - lastTap.t) < 350){
+        snapTokenToGrid(t.id);
+      }
+      lastTap = { t: now, id: t.id };
+      return;
+    } else {
+      state.selectedTokenId = null;
+      draggingTokenId = null;
+      renderTokenPanels();
+      save();
+      draw();
+    }
+  });
+
+  stage.addEventListener("pointermove", (e) => {
+    if(!pointers.has(e.pointerId)) return;
+    const prev = pointers.get(e.pointerId);
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    const rect = stage.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+
+    // Two-finger pinch zoom on touch screens
+    if(pointers.size >= 2){
+      const pts = [...pointers.values()];
+      const a = pts[0], b = pts[1];
+      const dist = Math.hypot(a.x-b.x, a.y-b.y);
+      // store baseline in element dataset
+      if(!stage.dataset.pinchDist){
+        stage.dataset.pinchDist = String(dist);
+        stage.dataset.pinchScale = String(state.view.scale);
+        stage.dataset.pinchMidX = String((a.x+b.x)/2);
+        stage.dataset.pinchMidY = String((a.y+b.y)/2);
+        return;
+      }
+      const baseDist = Number(stage.dataset.pinchDist);
+      const baseScale = Number(stage.dataset.pinchScale);
+      const factor = dist / Math.max(20, baseDist);
+      const newScale = clamp(baseScale * factor, 0.25, 3.5);
+
+      // zoom around midpoint
+      const midX = Number(stage.dataset.pinchMidX);
+      const midY = Number(stage.dataset.pinchMidY);
+      zoomAtScreenPoint(newScale, midX - rect.left, midY - rect.top);
+      save();
+      draw();
+      return;
+    }
+
+    // Drag token
+    if(draggingTokenId){
+      const t = state.tokens.find(x => x.id === draggingTokenId);
+      if(!t) return;
+      const wpos = screenToWorld(sx, sy);
+      t.x = wpos.x;
+      t.y = wpos.y;
+      save();
+      draw();
+      return;
+    }
+
+    // Pan view
+    const dx = e.clientX -
