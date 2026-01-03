@@ -333,16 +333,32 @@ async function loadAsset(key){
   const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
   function save(){
+  try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    // If storage is full, at least don't crash the app
+    console.warn("Save failed (storage full). Clearing old local save and retrying once.", e);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {}
   }
+}
   function load(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return;
-      const s = JSON.parse(raw);
-      Object.assign(state, s);
-    }catch(e){}
-  }
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+
+    const s = JSON.parse(raw);
+
+    // 🚑 Migration cleanup: if an old base64 map was saved, discard it
+    if (s?.map?.src && typeof s.map.src === "string" && s.map.src.startsWith("data:image/")) {
+      s.map.src = null;
+    }
+
+    Object.assign(state, s);
+  } catch(e){}
+}
 
   load();
 
