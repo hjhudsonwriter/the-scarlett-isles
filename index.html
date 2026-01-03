@@ -24,13 +24,15 @@
     html,body{height:100%}
     body{
       margin:0;
-      background: radial-gradient(1200px 600px at 30% 0%, rgba(34,197,94,.10), transparent 55%),
-                  radial-gradient(900px 500px at 80% 30%, rgba(59,130,246,.10), transparent 60%),
-                  var(--bg);
+      background:
+        radial-gradient(1200px 600px at 30% 0%, rgba(34,197,94,.10), transparent 55%),
+        radial-gradient(900px 500px at 80% 30%, rgba(59,130,246,.10), transparent 60%),
+        var(--bg);
       color:var(--text);
       font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       overflow:hidden;
     }
+
     header{
       height:56px;
       display:flex;
@@ -41,12 +43,18 @@
       background: linear-gradient(180deg, rgba(17,24,39,.85), rgba(17,24,39,.55));
       backdrop-filter: blur(10px);
       position:relative;
-      z-index:10;
+      z-index:30;
     }
     header .brand{
       display:flex; align-items:center; gap:10px;
       font-weight:700; letter-spacing:.2px;
       user-select:none;
+    }
+    .logo{
+      width:28px;height:28px;border-radius:10px;
+      background:rgba(34,197,94,.20);
+      border:1px solid rgba(34,197,94,.35);
+      display:grid;place-items:center;
     }
     header .pill{
       font-size:12px;
@@ -57,6 +65,7 @@
       background:rgba(255,255,255,.04);
     }
     header .actions{display:flex; gap:8px; align-items:center;}
+
     button, input, select{
       font:inherit;
       color:inherit;
@@ -88,34 +97,49 @@
       place-items:center;
     }
 
+    /* Layout modes */
     .app{
       height: calc(100% - 56px);
-      display:grid;
-      grid-template-columns: 1fr 340px;
-    }
-    @media (max-width: 980px){
-      .app{grid-template-columns:1fr}
-      .sidebar{position:absolute; top:56px; right:0; bottom:0; width:min(92vw, 380px); transform: translateX(105%); transition: transform .2s ease; z-index:20;}
-      body.sidebar-open .sidebar{transform: translateX(0)}
-      .sidebar-backdrop{
-        display:none;
-        position:absolute; inset:56px 0 0 0;
-        background: rgba(0,0,0,.45);
-        z-index:19;
-      }
-      body.sidebar-open .sidebar-backdrop{display:block}
+      position:relative;
     }
 
-    .stage{
-      position:relative;
+    /* SETUP view: two columns */
+    .setup{
+      height:100%;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:12px;
+      padding:12px;
+    }
+    .setup .preview{
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      background: rgba(255,255,255,.02);
       overflow:hidden;
-      touch-action:none; /* we manage pan/zoom */
+      position:relative;
+      box-shadow: var(--shadow);
+      min-height: 320px;
+    }
+
+    /* PLAY view: full canvas */
+    .play{
+      height:100%;
+      display:block;
+    }
+    .stage{
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      touch-action:none;
       background: rgba(255,255,255,.02);
     }
+    canvas{display:block; width:100%; height:100%}
 
+    /* HUD */
     .hud{
       position:absolute; left:12px; top:12px;
-      display:flex; gap:8px; z-index:5;
+      display:flex; gap:8px; z-index:10;
+      pointer-events:none;
     }
     .hud .chip{
       display:flex; align-items:center; gap:8px;
@@ -125,19 +149,15 @@
       background: rgba(0,0,0,.22);
       box-shadow: var(--shadow);
       user-select:none;
+      pointer-events:none;
     }
     .hud .chip b{font-variant-numeric: tabular-nums}
     .hud small{color:var(--muted)}
+    .tiny{font-size:12px}
+    .mono{font-variant-numeric: tabular-nums}
+    .muted{color:var(--muted)}
 
-    canvas{display:block; width:100%; height:100%}
-
-    .sidebar{
-      border-left:1px solid var(--line);
-      background: linear-gradient(180deg, rgba(15,23,42,.92), rgba(15,23,42,.78));
-      backdrop-filter: blur(10px);
-      padding:12px;
-      overflow:auto;
-    }
+    /* Cards + lists */
     .card{
       background: rgba(255,255,255,.03);
       border: 1px solid var(--line);
@@ -155,9 +175,8 @@
     .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     .row > *{flex:1}
     .row .shrink{flex:0 0 auto}
-    .muted{color:var(--muted)}
     .sep{height:1px; background:var(--line); margin:10px 0}
-
+    .hint{font-size:12px; color:var(--muted)}
     .list{display:flex; flex-direction:column; gap:8px}
     .list .item{
       padding:10px;
@@ -181,117 +200,227 @@
     .badge.good{border-color: rgba(34,197,94,.35); color:#bbf7d0; background: rgba(34,197,94,.10)}
     .badge.bad{border-color: rgba(239,68,68,.35); color:#fecaca; background: rgba(239,68,68,.10)}
 
-    .tiny{font-size:12px}
-    .mono{font-variant-numeric: tabular-nums}
     .token-edit{
       display:grid;
       grid-template-columns: 1fr 1fr;
       gap:8px;
     }
     .token-edit input{width:100%}
-    .hint{font-size:12px; color:var(--muted)}
+
+    /* Drawer panels in PLAY mode */
+    .drawer-backdrop{
+      display:none;
+      position:absolute; inset:0;
+      background: rgba(0,0,0,.45);
+      z-index:19;
+    }
+    .drawer{
+      position:absolute; top:0; right:0; bottom:0;
+      width:360px;
+      max-width: 92vw;
+      border-left:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,42,.92), rgba(15,23,42,.78));
+      backdrop-filter: blur(10px);
+      padding:12px;
+      overflow:auto;
+      transform: translateX(105%);
+      transition: transform .2s ease;
+      z-index:20;
+    }
+    body.drawer-open .drawer{transform: translateX(0)}
+    body.drawer-open .drawer-backdrop{display:block}
+
+    /* Hide setup view during play and vice versa */
+    .view{display:none; height:100%;}
+    .view.active{display:block;}
+
+    /* Make setup responsive */
+    @media (max-width: 980px){
+      .setup{grid-template-columns: 1fr; padding:10px;}
+      .setup .preview{min-height: 260px;}
+    }
+
+    /* Small helpers */
+    .kbd{
+      font-size:12px;
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+    .thumb{
+      width:34px; height:34px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.2);
+      display:grid; place-items:center;
+      overflow:hidden;
+    }
+    .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
   </style>
 </head>
+
 <body>
   <header>
     <div class="brand">
-      <span style="width:28px;height:28px;border-radius:10px;background:rgba(34,197,94,.20);border:1px solid rgba(34,197,94,.35);display:grid;place-items:center;">🌿</span>
+      <span class="logo">🌿</span>
       <span>Heartwood VTT</span>
-      <span class="pill">MVP</span>
+      <span class="pill" id="modePill">Setup</span>
     </div>
-    <div class="actions">
-      <button class="icon" id="btnSidebar" title="Open tools">☰</button>
-      <button class="primary" id="btnAddToken" title="Add token">＋ Token</button>
-      <button id="btnCenter" title="Center view">⤢</button>
+
+    <div class="actions" id="topActions">
+      <!-- filled by JS -->
     </div>
   </header>
 
   <div class="app">
-    <div class="stage" id="stage">
-      <canvas id="c"></canvas>
-
-      <div class="hud">
-        <div class="chip">
-          <div>
-            <div class="tiny muted">Zoom</div>
-            <b class="mono" id="hudZoom">100%</b>
-          </div>
-        </div>
-        <div class="chip">
-          <div>
-            <div class="tiny muted">Round</div>
-            <b class="mono" id="hudRound">1</b>
-          </div>
-          <small class="muted">Turn: <span class="mono" id="hudTurn">—</span></small>
-        </div>
-      </div>
-    </div>
-
-    <div class="sidebar-backdrop" id="backdrop"></div>
-
-    <aside class="sidebar" id="sidebar">
-      <div class="card">
-        <h3>Map</h3>
-        <div class="row">
-          <input type="file" id="mapFile" accept="image/*" />
-        </div>
-        <div class="sep"></div>
-        <div class="row">
-          <label class="tiny muted" style="flex:0 0 auto;">Grid (px)</label>
-          <input id="gridSize" type="number" min="16" max="256" value="64" />
-          <button id="btnToggleGrid" class="shrink">Grid</button>
-        </div>
-        <div class="hint" style="margin-top:8px;">Tip: set Grid to match your image squares (often 50–100px).</div>
-      </div>
-
-      <div class="card">
-        <h3>Tokens</h3>
-        <div class="list" id="tokenList"></div>
-        <div class="sep"></div>
-        <div class="hint">Tap a token on the map to select it. Drag to move. Double-tap to snap to grid.</div>
-      </div>
-
-      <div class="card">
-        <h3>Initiative</h3>
-        <div class="row">
-          <button id="btnStartInit" class="primary">Start</button>
-          <button id="btnPrev" class="shrink">◀</button>
-          <button id="btnNext" class="shrink">▶</button>
-          <button id="btnResetRound" class="shrink">Reset</button>
-        </div>
-        <div class="sep"></div>
-        <div class="list" id="initList"></div>
-        <div class="sep"></div>
-        <div class="row">
-          <button class="danger" id="btnClearAll">Clear Scene</button>
-          <button id="btnExport">Export JSON</button>
-        </div>
-        <div class="hint" style="margin-top:8px;">Export gives you a portable “campaign scene” file you can re-import later (next step).</div>
-      </div>
-
-      <div class="card">
-        <h3>D&D Beyond sync (reality check)</h3>
-        <div class="hint">
-          Direct syncing requires an official API/auth flow. Wizards’ terms restrict unauthorized data access.
-          <div style="margin-top:8px;">
-            This app is built with an adapter layer so you can later add an official integration if one becomes available.
+    <!-- SETUP VIEW -->
+    <section class="view setup active" id="viewSetup">
+      <div class="preview">
+        <div class="stage" id="stageSetup">
+          <canvas id="c"></canvas>
+          <div class="hud">
+            <div class="chip">
+              <div>
+                <div class="tiny muted">Zoom</div>
+                <b class="mono" id="hudZoom">100%</b>
+              </div>
+            </div>
+            <div class="chip">
+              <div>
+                <div class="tiny muted">Round</div>
+                <b class="mono" id="hudRound">1</b>
+              </div>
+              <small class="muted">Turn: <span class="mono" id="hudTurn">—</span></small>
+            </div>
           </div>
         </div>
       </div>
-    </aside>
+
+      <div>
+        <div class="card">
+          <h3>Scene setup</h3>
+          <div class="row">
+            <input type="file" id="mapFile" accept="image/*" />
+            <button id="btnCenter" class="shrink" title="Center view">⤢</button>
+          </div>
+          <div class="sep"></div>
+          <div class="row">
+            <label class="tiny muted" style="flex:0 0 auto;">Grid (px)</label>
+            <input id="gridSize" type="number" min="16" max="256" value="64" />
+            <button id="btnToggleGrid" class="shrink">Grid</button>
+          </div>
+          <div class="hint" style="margin-top:8px;">
+            Tip: set Grid to match your map squares (often 50–100px). Double-tap a token to snap.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Tokens</h3>
+          <div class="row">
+            <button class="primary" id="btnAddToken">＋ Add token</button>
+            <button id="btnStartPlay" class="shrink">Start session ▶</button>
+          </div>
+          <div class="sep"></div>
+          <div class="list" id="tokenList"></div>
+          <div class="hint" style="margin-top:10px;">
+            Map controls: drag to pan, wheel/pinch to zoom. Token: click to select, drag to move, double-tap to snap.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Initiative</h3>
+          <div class="row">
+            <button id="btnStartInit" class="primary">Start</button>
+            <button id="btnPrev" class="shrink">◀</button>
+            <button id="btnNext" class="shrink">▶</button>
+            <button id="btnResetRound" class="shrink">Reset</button>
+          </div>
+          <div class="sep"></div>
+          <div class="list" id="initList"></div>
+          <div class="sep"></div>
+          <div class="row">
+            <button class="danger" id="btnClearAll">Clear Scene</button>
+            <button id="btnExport">Export JSON</button>
+          </div>
+          <div class="hint" style="margin-top:8px;">
+            Export saves token stats + positions + grid settings. Map + token images stay in your browser (IndexedDB).
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Play mode toggle</h3>
+          <div class="hint">
+            Play mode gives you a full screen map and a slide-in panel, closer to “real VTT” feel.
+            <div style="margin-top:8px;">
+              Shortcut: <span class="kbd">Start session</span> to enter, <span class="kbd">Exit</span> to return.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLAY VIEW -->
+    <section class="view play" id="viewPlay">
+      <div class="stage" id="stagePlay">
+        <!-- same canvas reused; moved via JS into this stage -->
+      </div>
+
+      <div class="drawer-backdrop" id="drawerBackdrop"></div>
+      <aside class="drawer" id="drawer">
+        <div class="card">
+          <h3>Initiative</h3>
+          <div class="row">
+            <button id="btnStartInit2" class="primary">Start</button>
+            <button id="btnPrev2" class="shrink">◀</button>
+            <button id="btnNext2" class="shrink">▶</button>
+            <button id="btnResetRound2" class="shrink">Reset</button>
+          </div>
+          <div class="sep"></div>
+          <div class="list" id="initList2"></div>
+        </div>
+
+        <div class="card">
+          <h3>Tokens</h3>
+          <div class="list" id="tokenListPlay"></div>
+          <div class="hint" style="margin-top:10px;">
+            Tip: click a token name to focus it. The selected token gets a brighter ring.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Session tools</h3>
+          <div class="row">
+            <button id="btnCenter2">Center</button>
+            <button id="btnToggleGrid2">Grid</button>
+          </div>
+          <div class="sep"></div>
+          <div class="row">
+            <button class="danger" id="btnClearAll2">Clear Scene</button>
+            <button id="btnExport2">Export JSON</button>
+          </div>
+        </div>
+      </aside>
+    </section>
   </div>
 
 <script>
-  // -------- IndexedDB for big assets --------
+/* ----------------------------------------------------------
+   Heartwood VTT (Play Mode Toggle Edition)
+   - Setup view: upload map + configure tokens
+   - Play view: full screen map + slide-in drawer
+   - Big files (map + token images) stored in IndexedDB
+   - Only small metadata saved in localStorage (prevents quota errors)
+---------------------------------------------------------- */
+
 const DB_NAME = "heartwood-assets";
 const DB_STORE = "files";
 
 function openDB(){
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      req.result.createObjectStore(DB_STORE);
-    };
+    req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
@@ -299,29 +428,29 @@ function openDB(){
 
 async function saveAsset(key, blob){
   const db = await openDB();
-  return new Promise(res => {
+  return new Promise((res, rej) => {
     const tx = db.transaction(DB_STORE, "readwrite");
     tx.objectStore(DB_STORE).put(blob, key);
     tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
   });
 }
 
 async function loadAsset(key){
   const db = await openDB();
-  return new Promise(res => {
+  return new Promise((res) => {
     const tx = db.transaction(DB_STORE, "readonly");
     const req = tx.objectStore(DB_STORE).get(key);
-    req.onsuccess = () => res(req.result);
+    req.onsuccess = () => res(req.result || null);
+    req.onerror = () => res(null);
   });
 }
 
-(() => {
-  // ---------------------------
-  // State + persistence
-  // ---------------------------
-  const STORAGE_KEY = "heartwood_vtt_scene_v1";
+(async () => {
+  const STORAGE_KEY = "heartwood_vtt_scene_v2_meta"; // new key to avoid old quota-bloated saves
 
   const state = {
+    mode: "setup",  // "setup" | "play"
     map: { src: null, w: 2000, h: 1200 },
     view: { x: 0, y: 0, scale: 1 },
     grid: { size: 64, show: true },
@@ -331,50 +460,163 @@ async function loadAsset(key){
   };
 
   const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+  function sanitizeForSave(s){
+    // Only save small metadata. Big blobs live in IndexedDB.
+    return {
+      mode: s.mode,
+      map: { src: s.map.src, w: s.map.w, h: s.map.h },
+      view: { x: s.view.x, y: s.view.y, scale: s.view.scale },
+      grid: { size: s.grid.size, show: s.grid.show },
+      selectedTokenId: s.selectedTokenId,
+      initiative: { order: s.initiative.order, idx: s.initiative.idx, round: s.initiative.round },
+      tokens: s.tokens.map(t => ({
+        id: t.id,
+        name: t.name,
+        x: t.x, y: t.y,
+        r: t.r,
+        hp: t.hp, ac: t.ac, init: t.init,
+        color: t.color || t.f || "rgba(59,130,246,.22)",
+        imgKey: t.imgKey || null
+      })),
+    };
+  }
+
+  function applyLoadedMeta(meta){
+    if(!meta || typeof meta !== "object") return;
+    // Migration cleanup: strip any accidental base64 strings
+    if(meta?.map?.src && typeof meta.map.src === "string" && meta.map.src.startsWith("data:image/")) {
+      meta.map.src = null;
+    }
+    Object.assign(state, meta);
+    // Normalize token color field
+    state.tokens.forEach(t => {
+      t.f = t.color || t.f || "rgba(59,130,246,.22)";
+      delete t.color;
+    });
+  }
 
   function save(){
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    // If storage is full, at least don't crash the app
-    console.warn("Save failed (storage full). Clearing old local save and retrying once.", e);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {}
-  }
-}
-  function load(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return;
-
-    const s = JSON.parse(raw);
-
-    // 🚑 Migration cleanup: if an old base64 map was saved, discard it
-    if (s?.map?.src && typeof s.map.src === "string" && s.map.src.startsWith("data:image/")) {
-      s.map.src = null;
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeForSave(state)));
+    } catch(e){
+      console.warn("Local save failed. Clearing meta key and retrying once.", e);
+      try{
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeForSave(state)));
+      } catch(e2){
+        console.warn("Local save still failed.", e2);
+      }
     }
+  }
 
-    Object.assign(state, s);
-  } catch(e){}
-}
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      const meta = JSON.parse(raw);
+      applyLoadedMeta(meta);
+    } catch(e){}
+  }
 
+  // Load meta first
   load();
 
-  // ---------------------------
-  // Canvas rendering
-  // ---------------------------
-  const stage = document.getElementById("stage");
+  // DOM
+  const viewSetup = document.getElementById("viewSetup");
+  const viewPlay  = document.getElementById("viewPlay");
+  const modePill  = document.getElementById("modePill");
+  const topActions = document.getElementById("topActions");
+
+  const stageSetup = document.getElementById("stageSetup");
+  const stagePlay  = document.getElementById("stagePlay");
+
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
 
-  const hudZoom = document.getElementById("hudZoom");
+  const hudZoom  = document.getElementById("hudZoom");
   const hudRound = document.getElementById("hudRound");
-  const hudTurn = document.getElementById("hudTurn");
+  const hudTurn  = document.getElementById("hudTurn");
 
+  const drawerBackdrop = document.getElementById("drawerBackdrop");
+  drawerBackdrop.addEventListener("click", () => document.body.classList.remove("drawer-open"));
+
+  // Canvas host: we reuse the SAME canvas in both views by moving it.
+  let stage = stageSetup; // current stage element
+
+  function setMode(mode){
+    state.mode = mode;
+    save();
+
+    // Toggle views
+    if(mode === "play"){
+      viewSetup.classList.remove("active");
+      viewPlay.classList.add("active");
+      modePill.textContent = "Play";
+
+      // Move stage + canvas into play stage
+      stagePlay.appendChild(canvas);
+      stage = stagePlay;
+
+      // Top actions for play
+      topActions.innerHTML = `
+        <button class="icon" id="btnDrawer" title="Panels">☰</button>
+        <button class="primary" id="btnAddTokenTop" title="Add token">＋</button>
+        <button id="btnCenterTop" title="Center view">⤢</button>
+        <button id="btnExitPlay" title="Back to setup">Exit</button>
+      `;
+      document.getElementById("btnDrawer").onclick = () => document.body.classList.toggle("drawer-open");
+      document.getElementById("btnCenterTop").onclick = () => centerView();
+      document.getElementById("btnExitPlay").onclick = () => setMode("setup");
+      document.getElementById("btnAddTokenTop").onclick = () => addToken();
+
+      // Default drawer closed
+      document.body.classList.remove("drawer-open");
+
+      resize();
+      draw();
+      renderPlayPanels();
+    } else {
+      viewPlay.classList.remove("active");
+      viewSetup.classList.add("active");
+      modePill.textContent = "Setup";
+
+      // Move canvas back into setup preview stage
+      stageSetup.appendChild(canvas);
+      stage = stageSetup;
+
+      topActions.innerHTML = `
+        <button class="primary" id="btnStartPlayTop">Start session ▶</button>
+      `;
+      document.getElementById("btnStartPlayTop").onclick = () => tryStartPlay();
+
+      resize();
+      draw();
+      renderTokenPanels();
+      renderInit();
+    }
+  }
+
+  function tryStartPlay(){
+    if(!state.map.src){
+      alert("Upload a map first.");
+      return;
+    }
+    if(state.tokens.length === 0){
+      alert("Add at least one token first.");
+      return;
+    }
+    setMode("play");
+  }
+
+  // Set initial mode
+  setMode(state.mode === "play" ? "play" : "setup");
+
+  // Map image handling
   const img = new Image();
   let mapObjectUrl = null;
+
   img.onload = () => {
     state.map.w = img.naturalWidth || state.map.w;
     state.map.h = img.naturalHeight || state.map.h;
@@ -382,21 +624,45 @@ async function loadAsset(key){
     draw();
     save();
   };
-if(state.map.src === "indexeddb://map-image"){
-  loadAsset("map-image").then(blob => {
+
+  async function loadMapFromDB(){
+    const blob = await loadAsset("map-image");
     if(!blob) return;
     if(mapObjectUrl) URL.revokeObjectURL(mapObjectUrl);
     mapObjectUrl = URL.createObjectURL(blob);
     img.src = mapObjectUrl;
-  });
-}
+  }
 
+  if(state.map.src === "indexeddb://map-image"){
+    await loadMapFromDB();
+  }
+
+  // Token image cache
+  const tokenImgCache = new Map(); // imgKey -> { url, img }
+  async function getTokenImg(imgKey){
+    if(!imgKey) return null;
+    if(tokenImgCache.has(imgKey)) return tokenImgCache.get(imgKey).img;
+
+    const blob = await loadAsset(imgKey);
+    if(!blob) return null;
+
+    const url = URL.createObjectURL(blob);
+    const im = new Image();
+    im.src = url;
+    await new Promise(res => im.onload = res);
+
+    tokenImgCache.set(imgKey, { url, img: im });
+    return im;
+  }
+
+  // Resize + transforms
   function resize(){
     const dpr = Math.max(1, window.devicePixelRatio || 1);
-    canvas.width = Math.floor(stage.clientWidth * dpr);
-    canvas.height = Math.floor(stage.clientHeight * dpr);
-    canvas.style.width = stage.clientWidth + "px";
-    canvas.style.height = stage.clientHeight + "px";
+    const rect = stage.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     draw();
   }
@@ -416,9 +682,13 @@ if(state.map.src === "indexeddb://map-image"){
     };
   }
 
+  // Render
+  let drawTokenImagesInProgress = false;
+
   function draw(){
-    const w = stage.clientWidth;
-    const h = stage.clientHeight;
+    const rect = stage.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
     ctx.clearRect(0,0,w,h);
 
     // Background
@@ -437,7 +707,7 @@ if(state.map.src === "indexeddb://map-image"){
       ctx.fillText("Load a map image to begin.", 28, 44);
       ctx.fillStyle = "rgba(255,255,255,.45)";
       ctx.font = "13px system-ui";
-      ctx.fillText("Map panel → choose a PNG/JPG (e.g., your Underroot).", 28, 66);
+      ctx.fillText("Choose a PNG/JPG on the right, then add tokens.", 28, 66);
     }
 
     // Grid
@@ -446,7 +716,6 @@ if(state.map.src === "indexeddb://map-image"){
       ctx.strokeStyle = "rgba(255,255,255,.08)";
       ctx.lineWidth = 1;
 
-      // visible bounds in world coords
       const tl = screenToWorld(0,0);
       const br = screenToWorld(w,h);
 
@@ -469,17 +738,18 @@ if(state.map.src === "indexeddb://map-image"){
       }
     }
 
-    // Tokens
+    // Tokens (base pass)
     for(const t of state.tokens){
       const p = worldToScreen(t.x, t.y);
       const r = (t.r || 22) * state.view.scale;
 
-      // token circle
+      // token disc
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI*2);
       ctx.fillStyle = t.f || "rgba(34,197,94,.25)";
       ctx.fill();
 
+      // ring
       const selected = t.id === state.selectedTokenId;
       ctx.lineWidth = selected ? 3 : 2;
       ctx.strokeStyle = selected ? "rgba(34,197,94,.85)" : "rgba(255,255,255,.28)";
@@ -489,8 +759,8 @@ if(state.map.src === "indexeddb://map-image"){
       ctx.font = `${Math.max(12, 12*state.view.scale)}px system-ui`;
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
-      ctx.fillStyle = "rgba(0,0,0,.55)";
       const label = t.name || "Token";
+      ctx.fillStyle = "rgba(0,0,0,.55)";
       const tw = ctx.measureText(label).width + 10;
       const lx = p.x - tw/2;
       const ly = p.y - r - 8;
@@ -498,7 +768,7 @@ if(state.map.src === "indexeddb://map-image"){
       ctx.fillStyle = "rgba(255,255,255,.9)";
       ctx.fillText(label, p.x, ly);
 
-      // hp badge
+      // hp badge (optional, show in play too for now)
       ctx.font = `${Math.max(11, 11*state.view.scale)}px system-ui`;
       ctx.textBaseline = "top";
       const hp = (t.hp ?? "—");
@@ -513,17 +783,148 @@ if(state.map.src === "indexeddb://map-image"){
       ctx.fillText(badge, p.x, by+3);
     }
 
-    // HUD
+    // HUD text
     hudZoom.textContent = Math.round(state.view.scale*100) + "%";
     hudRound.textContent = String(state.initiative.round);
     const turnId = state.initiative.order[state.initiative.idx];
     const turnToken = state.tokens.find(t => t.id === turnId);
     hudTurn.textContent = turnToken ? turnToken.name : "—";
+
+    // Token images (async overlay pass)
+    // We do this after the base draw so we don’t block rendering.
+    if(!drawTokenImagesInProgress){
+      const needs = state.tokens.some(t => t.imgKey);
+      if(needs){
+        drawTokenImagesInProgress = true;
+        drawTokenImages().finally(() => {
+          drawTokenImagesInProgress = false;
+        });
+      }
+    }
+  }
+
+  async function drawTokenImages(){
+    const rect = stage.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+
+    // Redraw only images on top (quick + simple approach: we redraw everything once)
+    // This keeps code reliable at MVP scale.
+    // If you want max performance later, we can do proper layering.
+    // (For now, just re-run draw once images are ready.)
+    let changed = false;
+
+    for(const t of state.tokens){
+      if(!t.imgKey) continue;
+      const im = await getTokenImg(t.imgKey);
+      if(im) changed = true;
+    }
+    if(changed){
+      // full redraw, now with cached images ready
+      const rect2 = stage.getBoundingClientRect();
+      ctx.clearRect(0,0,rect2.width,rect2.height);
+
+      // Run normal draw but with images immediately available
+      // We'll manually render map + grid + tokens, with image clip.
+      const W = rect2.width, H = rect2.height;
+      ctx.fillStyle = "rgba(0,0,0,.15)";
+      ctx.fillRect(0,0,W,H);
+
+      if(state.map.src && img.complete){
+        const p0 = worldToScreen(0,0);
+        ctx.drawImage(img, p0.x, p0.y, state.map.w * state.view.scale, state.map.h * state.view.scale);
+      }
+
+      if(state.grid.show){
+        const gs = state.grid.size;
+        ctx.strokeStyle = "rgba(255,255,255,.08)";
+        ctx.lineWidth = 1;
+        const tl = screenToWorld(0,0);
+        const br = screenToWorld(W,H);
+        const startX = Math.floor(tl.x / gs) * gs;
+        const startY = Math.floor(tl.y / gs) * gs;
+        for(let x = startX; x < br.x; x += gs){
+          const sx = worldToScreen(x,0).x;
+          ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, H); ctx.stroke();
+        }
+        for(let y = startY; y < br.y; y += gs){
+          const sy = worldToScreen(0,y).y;
+          ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(W, sy); ctx.stroke();
+        }
+      }
+
+      for(const t of state.tokens){
+        const p = worldToScreen(t.x, t.y);
+        const r = (t.r || 22) * state.view.scale;
+
+        // clip circle
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+        ctx.closePath();
+        ctx.clip();
+
+        // background tint
+        ctx.fillStyle = t.f || "rgba(34,197,94,.25)";
+        ctx.fillRect(p.x - r, p.y - r, r*2, r*2);
+
+        // image fill
+        if(t.imgKey){
+          const im = tokenImgCache.get(t.imgKey)?.img || null;
+          if(im){
+            ctx.drawImage(im, p.x - r, p.y - r, r*2, r*2);
+          }
+        }
+        ctx.restore();
+
+        // ring
+        const selected = t.id === state.selectedTokenId;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+        ctx.lineWidth = selected ? 3 : 2;
+        ctx.strokeStyle = selected ? "rgba(34,197,94,.85)" : "rgba(255,255,255,.28)";
+        ctx.stroke();
+
+        // nameplate
+        ctx.font = `${Math.max(12, 12*state.view.scale)}px system-ui`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        const label = t.name || "Token";
+        ctx.fillStyle = "rgba(0,0,0,.55)";
+        const tw = ctx.measureText(label).width + 10;
+        const lx = p.x - tw/2;
+        const ly = p.y - r - 8;
+        ctx.fillRect(lx, ly-16, tw, 18);
+        ctx.fillStyle = "rgba(255,255,255,.9)";
+        ctx.fillText(label, p.x, ly);
+
+        // hp badge
+        ctx.font = `${Math.max(11, 11*state.view.scale)}px system-ui`;
+        ctx.textBaseline = "top";
+        const hp = (t.hp ?? "—");
+        const ac = (t.ac ?? "—");
+        const badge = `HP ${hp}  AC ${ac}`;
+        const bw = ctx.measureText(badge).width + 10;
+        const bx = p.x - bw/2;
+        const by = p.y + r + 6;
+        ctx.fillStyle = "rgba(0,0,0,.55)";
+        ctx.fillRect(bx, by, bw, 18);
+        ctx.fillStyle = "rgba(255,255,255,.85)";
+        ctx.fillText(badge, p.x, by+3);
+      }
+
+      // HUD
+      hudZoom.textContent = Math.round(state.view.scale*100) + "%";
+      hudRound.textContent = String(state.initiative.round);
+      const turnId = state.initiative.order[state.initiative.idx];
+      const turnToken = state.tokens.find(t => t.id === turnId);
+      hudTurn.textContent = turnToken ? turnToken.name : "—";
+    }
   }
 
   function centerView(){
-    // center map in viewport
-    const w = stage.clientWidth, h = stage.clientHeight;
+    const rect = stage.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
     const scale = Math.min(w / (state.map.w||2000), h / (state.map.h||1200));
     state.view.scale = Math.max(0.25, Math.min(2.5, scale));
     state.view.x = (state.map.w/2) - (w/(2*state.view.scale));
@@ -532,9 +933,7 @@ if(state.map.src === "indexeddb://map-image"){
     draw();
   }
 
-  // ---------------------------
   // Input: pan/zoom + token drag
-  // ---------------------------
   let pointers = new Map();
   let draggingTokenId = null;
   let lastTap = { t:0, id:null };
@@ -550,35 +949,38 @@ if(state.map.src === "indexeddb://map-image"){
     return null;
   }
 
+  function getStageLocal(e){
+    const rect = stage.getBoundingClientRect();
+    return { sx: e.clientX - rect.left, sy: e.clientY - rect.top };
+  }
+
   stage.addEventListener("pointerdown", (e) => {
     stage.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
 
-    const rect = stage.getBoundingClientRect();
-    const sx = e.clientX - rect.left;
-    const sy = e.clientY - rect.top;
-
+    const { sx, sy } = getStageLocal(e);
     const t = hitToken(sx, sy);
+
     if(t){
       state.selectedTokenId = t.id;
       draggingTokenId = t.id;
-      renderTokenPanels();
       save();
       draw();
+      if(state.mode === "setup") renderTokenPanels();
+      else renderPlayPanels();
 
-      // double-tap to snap
       const now = performance.now();
       if(lastTap.id === t.id && (now - lastTap.t) < 350){
         snapTokenToGrid(t.id);
       }
       lastTap = { t: now, id: t.id };
-      return;
     } else {
       state.selectedTokenId = null;
       draggingTokenId = null;
-      renderTokenPanels();
       save();
       draw();
+      if(state.mode === "setup") renderTokenPanels();
+      else renderPlayPanels();
     }
   });
 
@@ -587,16 +989,13 @@ if(state.map.src === "indexeddb://map-image"){
     const prev = pointers.get(e.pointerId);
     pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
 
-    const rect = stage.getBoundingClientRect();
-    const sx = e.clientX - rect.left;
-    const sy = e.clientY - rect.top;
+    const { sx, sy } = getStageLocal(e);
 
-    // Two-finger pinch zoom on touch screens
     if(pointers.size >= 2){
       const pts = [...pointers.values()];
       const a = pts[0], b = pts[1];
       const dist = Math.hypot(a.x-b.x, a.y-b.y);
-      // store baseline in element dataset
+
       if(!stage.dataset.pinchDist){
         stage.dataset.pinchDist = String(dist);
         stage.dataset.pinchScale = String(state.view.scale);
@@ -604,21 +1003,22 @@ if(state.map.src === "indexeddb://map-image"){
         stage.dataset.pinchMidY = String((a.y+b.y)/2);
         return;
       }
+
       const baseDist = Number(stage.dataset.pinchDist);
       const baseScale = Number(stage.dataset.pinchScale);
       const factor = dist / Math.max(20, baseDist);
       const newScale = clamp(baseScale * factor, 0.25, 3.5);
 
-      // zoom around midpoint
-      const midX = Number(stage.dataset.pinchMidX);
-      const midY = Number(stage.dataset.pinchMidY);
-      zoomAtScreenPoint(newScale, midX - rect.left, midY - rect.top);
+      const rect = stage.getBoundingClientRect();
+      const midX = Number(stage.dataset.pinchMidX) - rect.left;
+      const midY = Number(stage.dataset.pinchMidY) - rect.top;
+      zoomAtScreenPoint(newScale, midX, midY);
+
       save();
       draw();
       return;
     }
 
-    // Drag token
     if(draggingTokenId){
       const t = state.tokens.find(x => x.id === draggingTokenId);
       if(!t) return;
@@ -627,10 +1027,10 @@ if(state.map.src === "indexeddb://map-image"){
       t.y = wpos.y;
       save();
       draw();
+      if(state.mode === "setup") renderTokenPanels();
       return;
     }
 
-    // Pan view
     const dx = e.clientX - prev.x;
     const dy = e.clientY - prev.y;
     state.view.x -= dx / state.view.scale;
@@ -681,28 +1081,19 @@ if(state.map.src === "indexeddb://map-image"){
     draw();
   }
 
-  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-
-  // ---------------------------
-  // UI wiring
-  // ---------------------------
+  // Setup UI wiring
   const mapFile = document.getElementById("mapFile");
- mapFile.addEventListener("change", async () => {
-  const f = mapFile.files?.[0];
-  if(!f) return;
+  mapFile.addEventListener("change", async () => {
+    const f = mapFile.files?.[0];
+    if(!f) return;
 
-  await saveAsset("map-image", f);
+    await saveAsset("map-image", f);
+    state.map.src = "indexeddb://map-image";
+    save();
 
-  state.map.src = "indexeddb://map-image";
-  save();
-
-  const blob = await loadAsset("map-image");
-if(!blob) return;
-if(mapObjectUrl) URL.revokeObjectURL(mapObjectUrl);
-mapObjectUrl = URL.createObjectURL(blob);
-img.src = mapObjectUrl;
-});
-
+    await loadMapFromDB();
+    // img.onload will center + draw
+  });
 
   const gridSize = document.getElementById("gridSize");
   gridSize.value = state.grid.size;
@@ -717,10 +1108,12 @@ img.src = mapObjectUrl;
     state.grid.show = !state.grid.show;
     save(); draw();
   });
-
   document.getElementById("btnCenter").addEventListener("click", centerView);
 
-  document.getElementById("btnAddToken").addEventListener("click", () => {
+  document.getElementById("btnStartPlay").addEventListener("click", tryStartPlay);
+
+  // Add token (shared)
+  function addToken(){
     const t = {
       id: uid(),
       name: "New",
@@ -729,30 +1122,31 @@ img.src = mapObjectUrl;
       r: 22,
       hp: 10,
       ac: 12,
+      init: null,
       f: "rgba(59,130,246,.22)",
+      imgKey: null,
     };
     state.tokens.push(t);
     state.selectedTokenId = t.id;
     save();
-    renderTokenPanels();
     rebuildInitiativeFromTokens();
+    if(state.mode === "setup") renderTokenPanels();
+    else renderPlayPanels();
     draw();
-  });
+  }
 
-  // Sidebar open/close on mobile
-  const btnSidebar = document.getElementById("btnSidebar");
-  const backdrop = document.getElementById("backdrop");
-  btnSidebar.addEventListener("click", () => document.body.classList.toggle("sidebar-open"));
-  backdrop.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
+  document.getElementById("btnAddToken").addEventListener("click", addToken);
 
-  // ---------------------------
-  // Tokens panel
-  // ---------------------------
+  // Token panels (SETUP)
   const tokenList = document.getElementById("tokenList");
-  function renderTokenPanels(){
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+
+  async function renderTokenPanels(){
     tokenList.innerHTML = "";
     if(state.tokens.length === 0){
-      tokenList.innerHTML = `<div class="hint">No tokens yet. Add one with “＋ Token”.</div>`;
+      tokenList.innerHTML = `<div class="hint">No tokens yet. Add one with “＋ Add token”.</div>`;
       renderInit();
       return;
     }
@@ -761,47 +1155,95 @@ img.src = mapObjectUrl;
       const selected = t.id === state.selectedTokenId;
       const el = document.createElement("div");
       el.className = "item";
+
+      // Thumbnail (if token image exists)
+      let thumbHtml = `<div class="thumb">🎭</div>`;
+      if(t.imgKey){
+        const blob = await loadAsset(t.imgKey);
+        if(blob){
+          const url = URL.createObjectURL(blob);
+          thumbHtml = `<div class="thumb"><img src="${url}" alt="" /></div>`;
+          // revoke after image loads
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+      }
+
       el.innerHTML = `
         <div>
           <div class="meta">
+            ${thumbHtml}
             <b>${escapeHtml(t.name || "Token")}</b>
             ${selected ? `<span class="badge good">selected</span>` : `<span class="badge">token</span>`}
           </div>
+
           <div class="token-edit" style="margin-top:8px;">
             <input data-k="name" placeholder="Name" value="${escapeAttr(t.name||"")}" />
             <input data-k="hp" type="number" placeholder="HP" value="${escapeAttr(String(t.hp ?? ""))}" />
             <input data-k="ac" type="number" placeholder="AC" value="${escapeAttr(String(t.ac ?? ""))}" />
             <input data-k="init" type="number" placeholder="Init" value="${escapeAttr(String(t.init ?? ""))}" />
           </div>
+
           <div class="row" style="margin-top:8px;">
+            <input class="shrink" data-k="img" type="file" accept="image/*" title="Token image" />
             <button class="shrink" data-act="select">Select</button>
             <button class="shrink" data-act="snap">Snap</button>
             <button class="shrink danger" data-act="del">Delete</button>
           </div>
+
+          <div class="hint" style="margin-top:6px;">Token image is stored locally in your browser (not uploaded anywhere).</div>
         </div>
+
         <div class="muted tiny mono" style="text-align:right;">
           x:${Math.round(t.x)}<br/>y:${Math.round(t.y)}
         </div>
       `;
-      // inputs
+
+      // Inputs
       el.querySelectorAll("input").forEach(inp => {
+        const k = inp.dataset.k;
+
+        if(k === "img"){
+          inp.addEventListener("change", async () => {
+            const file = inp.files?.[0];
+            if(!file) return;
+            const key = `token-img-${t.id}`;
+            await saveAsset(key, file);
+            t.imgKey = key;
+            save();
+            draw();
+            renderTokenPanels();
+            renderPlayPanels();
+          });
+          return;
+        }
+
         inp.addEventListener("input", () => {
-          const k = inp.dataset.k;
           if(k === "name") t.name = inp.value;
           if(k === "hp") t.hp = Number(inp.value);
           if(k === "ac") t.ac = Number(inp.value);
-          if(k === "init") t.init = Number(inp.value);
+          if(k === "init"){
+            const v = inp.value.trim();
+            t.init = v === "" ? null : Number(v);
+          }
           save();
           rebuildInitiativeFromTokens();
           renderInit();
+          renderPlayPanels();
           draw();
         });
       });
 
+      // Buttons
       el.querySelectorAll("button").forEach(btn => {
         btn.addEventListener("click", () => {
           const act = btn.dataset.act;
-          if(act === "select"){ state.selectedTokenId = t.id; save(); renderTokenPanels(); draw(); }
+          if(act === "select"){
+            state.selectedTokenId = t.id;
+            save();
+            renderTokenPanels();
+            renderPlayPanels();
+            draw();
+          }
           if(act === "snap"){ snapTokenToGrid(t.id); }
           if(act === "del"){
             state.tokens = state.tokens.filter(x => x.id !== t.id);
@@ -809,8 +1251,10 @@ img.src = mapObjectUrl;
             state.initiative.order = state.initiative.order.filter(id => id !== t.id);
             if(state.initiative.idx >= state.initiative.order.length) state.initiative.idx = state.initiative.order.length-1;
             save();
+            rebuildInitiativeFromTokens();
             renderTokenPanels();
             renderInit();
+            renderPlayPanels();
             draw();
           }
         });
@@ -818,23 +1262,61 @@ img.src = mapObjectUrl;
 
       tokenList.appendChild(el);
     }
+
     renderInit();
   }
 
-  // ---------------------------
+  // Play panels (drawer)
+  const tokenListPlay = document.getElementById("tokenListPlay");
+  function renderPlayPanels(){
+    tokenListPlay.innerHTML = "";
+    if(state.tokens.length === 0){
+      tokenListPlay.innerHTML = `<div class="hint">No tokens in scene.</div>`;
+    } else {
+      for(const t of state.tokens){
+        const isSelected = t.id === state.selectedTokenId;
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div>
+            <div class="meta">
+              <b>${escapeHtml(t.name || "Token")}</b>
+              ${isSelected ? `<span class="badge good">selected</span>` : ``}
+              ${Number.isFinite(t.init) ? `<span class="badge">Init ${t.init}</span>` : `<span class="badge">Init —</span>`}
+            </div>
+            <div class="muted tiny">HP ${t.hp ?? "—"} · AC ${t.ac ?? "—"}</div>
+          </div>
+          <button class="shrink">Focus</button>
+        `;
+        el.querySelector("button").addEventListener("click", () => {
+          state.selectedTokenId = t.id;
+          focusOnToken(t.id);
+          save();
+          draw();
+          renderPlayPanels();
+          if(state.mode === "setup") renderTokenPanels();
+        });
+        tokenListPlay.appendChild(el);
+      }
+    }
+
+    // Mirror initiative list into play drawer
+    renderInit2();
+  }
+
   // Initiative
-  // ---------------------------
-  const initList = document.getElementById("initList");
+  const initList  = document.getElementById("initList");
+  const initList2 = document.getElementById("initList2");
+
   function rebuildInitiativeFromTokens(){
-    // Keep order stable, but sort by init if present
     const withInit = state.tokens.map(t => ({ id:t.id, init: (Number.isFinite(t.init) ? t.init : null) }));
     const anyInit = withInit.some(x => x.init !== null);
+
     if(anyInit){
       withInit.sort((a,b) => (b.init ?? -9999) - (a.init ?? -9999));
       state.initiative.order = withInit.map(x => x.id);
       if(state.initiative.idx === -1 && state.initiative.order.length) state.initiative.idx = 0;
     } else {
-      // default: token list order
       state.initiative.order = state.tokens.map(t => t.id);
       if(state.initiative.idx === -1 && state.initiative.order.length) state.initiative.idx = 0;
     }
@@ -847,10 +1329,11 @@ img.src = mapObjectUrl;
       initList.innerHTML = `<div class="hint">Add tokens, set Init values (optional), then hit Start.</div>`;
       return;
     }
-    state.initiative.order.forEach((id, idx) => {
+    for(const [idx, id] of state.initiative.order.entries()){
       const t = state.tokens.find(x => x.id === id);
-      if(!t) return;
+      if(!t) continue;
       const isTurn = idx === state.initiative.idx;
+
       const el = document.createElement("div");
       el.className = "item";
       el.innerHTML = `
@@ -862,99 +1345,148 @@ img.src = mapObjectUrl;
           </div>
           <div class="muted tiny">HP ${t.hp ?? "—"} · AC ${t.ac ?? "—"}</div>
         </div>
-        <button class="shrink" data-id="${id}">Focus</button>
+        <button class="shrink">Focus</button>
       `;
       el.querySelector("button").addEventListener("click", () => {
         state.selectedTokenId = id;
         focusOnToken(id);
         save();
-        renderTokenPanels();
         draw();
+        renderTokenPanels();
+        renderPlayPanels();
       });
       initList.appendChild(el);
-    });
+    }
+  }
+
+  function renderInit2(){
+    initList2.innerHTML = "";
+    if(state.initiative.order.length === 0){
+      initList2.innerHTML = `<div class="hint">No initiative yet.</div>`;
+      return;
+    }
+    for(const [idx, id] of state.initiative.order.entries()){
+      const t = state.tokens.find(x => x.id === id);
+      if(!t) continue;
+      const isTurn = idx === state.initiative.idx;
+
+      const el = document.createElement("div");
+      el.className = "item";
+      el.innerHTML = `
+        <div>
+          <div class="meta">
+            <b>${escapeHtml(t.name||"Token")}</b>
+            ${isTurn ? `<span class="badge good">turn</span>` : ``}
+            ${Number.isFinite(t.init) ? `<span class="badge">Init ${t.init}</span>` : `<span class="badge">Init —</span>`}
+          </div>
+          <div class="muted tiny">HP ${t.hp ?? "—"} · AC ${t.ac ?? "—"}</div>
+        </div>
+        <button class="shrink">Focus</button>
+      `;
+      el.querySelector("button").addEventListener("click", () => {
+        state.selectedTokenId = id;
+        focusOnToken(id);
+        save();
+        draw();
+        renderPlayPanels();
+        if(state.mode === "setup") renderTokenPanels();
+      });
+      initList2.appendChild(el);
+    }
   }
 
   function focusOnToken(id){
     const t = state.tokens.find(x => x.id === id);
     if(!t) return;
-    const w = stage.clientWidth, h = stage.clientHeight;
+    const rect = stage.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
     state.view.x = t.x - (w/(2*state.view.scale));
     state.view.y = t.y - (h/(2*state.view.scale));
   }
 
-  document.getElementById("btnStartInit").addEventListener("click", () => {
+  function startInit(){
     rebuildInitiativeFromTokens();
     state.initiative.idx = state.initiative.order.length ? 0 : -1;
     state.initiative.round = 1;
-    save(); renderInit(); draw();
-  });
-
-  document.getElementById("btnNext").addEventListener("click", () => {
+    save(); renderInit(); renderPlayPanels(); draw();
+  }
+  function nextTurn(){
     if(state.initiative.order.length === 0) return;
     state.initiative.idx++;
     if(state.initiative.idx >= state.initiative.order.length){
       state.initiative.idx = 0;
       state.initiative.round++;
     }
-    save(); renderInit(); draw();
-  });
-
-  document.getElementById("btnPrev").addEventListener("click", () => {
+    save(); renderInit(); renderPlayPanels(); draw();
+  }
+  function prevTurn(){
     if(state.initiative.order.length === 0) return;
     state.initiative.idx--;
     if(state.initiative.idx < 0){
       state.initiative.idx = state.initiative.order.length - 1;
       state.initiative.round = Math.max(1, state.initiative.round - 1);
     }
-    save(); renderInit(); draw();
-  });
-
-  document.getElementById("btnResetRound").addEventListener("click", () => {
+    save(); renderInit(); renderPlayPanels(); draw();
+  }
+  function resetRound(){
     state.initiative.round = 1;
     state.initiative.idx = state.initiative.order.length ? 0 : -1;
-    save(); renderInit(); draw();
+    save(); renderInit(); renderPlayPanels(); draw();
+  }
+
+  // Setup init buttons
+  document.getElementById("btnStartInit").addEventListener("click", startInit);
+  document.getElementById("btnNext").addEventListener("click", nextTurn);
+  document.getElementById("btnPrev").addEventListener("click", prevTurn);
+  document.getElementById("btnResetRound").addEventListener("click", resetRound);
+
+  // Play init buttons (drawer)
+  document.getElementById("btnStartInit2").addEventListener("click", startInit);
+  document.getElementById("btnNext2").addEventListener("click", nextTurn);
+  document.getElementById("btnPrev2").addEventListener("click", prevTurn);
+  document.getElementById("btnResetRound2").addEventListener("click", resetRound);
+
+  // Play tools
+  document.getElementById("btnCenter2").addEventListener("click", centerView);
+  document.getElementById("btnToggleGrid2").addEventListener("click", () => {
+    state.grid.show = !state.grid.show;
+    save(); draw();
   });
 
-  document.getElementById("btnClearAll").addEventListener("click", () => {
-    if(!confirm("Clear the scene? This removes map + tokens + initiative.")) return;
+  // Clear + Export (both places)
+  function clearScene(){
+    if(!confirm("Clear the scene? This removes map + tokens + initiative (local browser data).")) return;
     localStorage.removeItem(STORAGE_KEY);
+    // We *do not* delete IndexedDB in this MVP to avoid complicated UX.
+    // If you want a “nuke all assets” button, we can add it next.
     location.reload();
-  });
+  }
 
-  document.getElementById("btnExport").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+  function exportJSON(){
+    const blob = new Blob([JSON.stringify(sanitizeForSave(state), null, 2)], { type:"application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "heartwood-scene.json";
     a.click();
     URL.revokeObjectURL(a.href);
-  });
-
-  // ---------------------------
-  // Helpers
-  // ---------------------------
-  async function fileToDataURL(file){
-    return await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onerror = rej;
-      r.onload = () => res(r.result);
-      r.readAsDataURL(file);
-    });
   }
 
-  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-  function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+  document.getElementById("btnClearAll").addEventListener("click", clearScene);
+  document.getElementById("btnExport").addEventListener("click", exportJSON);
+  document.getElementById("btnClearAll2").addEventListener("click", clearScene);
+  document.getElementById("btnExport2").addEventListener("click", exportJSON);
 
   // Initial render
   if(!state.map.src){
-    // nice default view for empty stage
     state.view.scale = 1;
     state.view.x = 0;
     state.view.y = 0;
   }
+
   rebuildInitiativeFromTokens();
-  renderTokenPanels();
+  await renderTokenPanels();
+  renderInit();
+  renderPlayPanels();
   draw();
 
   // Register service worker (PWA offline)
